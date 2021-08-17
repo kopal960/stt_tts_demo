@@ -1,14 +1,15 @@
 const speech = require("@google-cloud/speech")
-let bodyParser = require('body-parser');
+const text = require("@google-cloud/text-to-speech")
 const fs = require('fs')
-GOOGLE_APPLICATION_CREDENTIALS = "C:/Users/kopal/Downloads/careful-tracer-318513-54b98a2764e9.json";
-//console.log(GOOGLE_APPLICATION_CREDENTIALS)
 const http = require("http");
 const express = require("express");
 const { json } = require("body-parser");
+const util = require('util')
+
 const app = express()
 const hostname = '127.0.0.1';
-const port = 8000;
+const port = 3000;
+GOOGLE_APPLICATION_CREDENTIALS = JSON.parse(fs.readFileSync("C:/Users/kopal/Downloads/careful-tracer-318513-54b98a2764e9.json"));
 
 //Create HTTP server and listen on port 3000 for requests
 const server = http.createServer(app);
@@ -25,45 +26,53 @@ app.get('/' , (req,res)=>{
     res.render("index.ejs");
 })
 
-const client = new speech.SpeechClient({credentials : JSON.parse(fs.readFileSync(GOOGLE_APPLICATION_CREDENTIALS))});
+const stt_client = new speech.SpeechClient({credentials :GOOGLE_APPLICATION_CREDENTIALS });
+const tts_client = new text.TextToSpeechClient({credentials : GOOGLE_APPLICATION_CREDENTIALS})
+
 app.post('/stt' , async (req , res) => {
-  //console.log(client);
-  //console.log(req.body.audioBytes)
-  
-  /*var reader = new FileReader();
-        reader.readAsDataURL(req.body.audioBytes); 
-        reader.onloadend = async function() {
-            var base64data = reader.result; 
-            
-          }     
-            //console.log(base64data);*/
-  const audioBit = fs.readFileSync(req.body.audioBytes);
-  console.log(audioBit , typeof(audioBit))
+  console.log(req.body.audioBytes)
   const request = {
     audio : {
-      'content' : audioBit
+      'content' : req.body.audioBytes
     } , 
     config : {
-      encoding : "LINEAR16" ,
-      sampleRateHertz : 16000,
+      encoding : "LINEAR48" ,
+      //sampleRateHertz : 48000,
       languageCode : 'en-US'
     }
   };
   console.log("sending request");
-  //console.log(JSON.parse(JSON.parse(fs.readFileSync(GOOGLE_APPLICATION_CREDENTIALS))).client_email)
-  try{const [response] = await client.recognize(request);
+  try{
+    const [response] = await stt_client.recognize(request); 
+    //response = "hello"
     console.log("Request successful");
     console.log(response)
     const transcription = response.results.map((result) => {
-      result.alternatives[0].transcript}).join('. ');
+      console.log(result.alternatives[0].transcript);
+      return result.alternatives[0].transcript} ).join(". ");
     console.log(transcription)
-    $("#chat-input").val(transcription);
-    if(transcription.length > 0)
-      record_send.text("send");
-      res.send(transcription)}
+    res.send(transcription)}
   catch(e){
     console.log(e)
-    res.send(e)
+    res.send()
   }
-  //res.send(req.body.audioBytes)
+})
+
+app.post('/tts' , async(req , res)=>{
+  console.log(req.body.text);
+  const request = {
+    input: {text: req.body.text},
+    voice: {languageCode: 'en-US', ssmlGender: 'NEUTRAL'},
+    audioConfig: {audioEncoding: 'MP3'},
+  };
+  try{
+    const [response] = await tts_client.synthesizeSpeech(request); 
+    const writeFile = util.promisify(fs.writeFile);
+    await writeFile('static/output.mp3', response.audioContent, 'binary');
+    console.log('Audio content written to file: output.mp3');
+    res.send("Successful");
+  }
+  catch(e){
+    res.send(e);
+  }
 })
