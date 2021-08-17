@@ -137,7 +137,7 @@
       #chat-input:-moz-placeholder { /* Firefox 18- */
         color: #ccc;
       }
-      .chat-submit {  
+      .chat-submit{  
         position:absolute;
         bottom:3px;
         right:10px;
@@ -149,6 +149,7 @@
         width:35px;
         height:35px;  
       }
+      
       .chat-logs {
         padding:15px; 
         height:370px;
@@ -223,6 +224,7 @@
           clear: both;
           margin-bottom: 70px;
       }
+      audio{display: hidden;}
           </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
@@ -230,6 +232,7 @@
     <div id="center-text">
       <h2>ChatBox UI</h2>
       <p>Message send and scroll to bottom enabled </p>
+      <audio controls> <source src="output.mp3" type ="audio/mpeg"> </audio>
     </div> 
   <div id="body"> 
     
@@ -247,13 +250,14 @@
           <div class="chat-box-overlay">   
           </div>
           <div class="chat-logs">
-          
-          </div><!--chat-log -->
+          </div>
         </div>
         <div class="chat-input">      
           <form>
             <input type="text" id="chat-input" placeholder="Send a message..."/>
-            <button type="submit" class="chat-submit" id="chat-submit"><i class="material-icons" id="record-send">mic</i></button>
+            <button type="submit" class="chat-submit" id="chat-submit">
+              <i class="material-icons" id="record-send">mic</i>
+            </button>
           </form>      
         </div>
       </div>
